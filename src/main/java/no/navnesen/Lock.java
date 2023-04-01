@@ -1,19 +1,58 @@
 package no.navnesen;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static no.navnesen.Raise.raise;
-
 public class Lock {
-	private final AtomicReference<Locked> locked;
+	protected final AtomicReference<List<KeyWaiter>> _waiters = new AtomicReference<>(new ArrayList<>());
+	protected final AtomicReference<Key> _activeKey = new AtomicReference<>(null);
 
-	protected Lock(Locked locked) {
-		this.locked = new AtomicReference<>(locked);
+	public boolean isLocked() {
+		return this._activeKey.get() != null;
 	}
 
-	public void unlock() {
-		var locked = this.locked.getAndSet(null);
-		if (locked == null) raise(new LockedException());
-		locked.release();
+	/**
+	 * Seal the lock.
+	 *
+	 * @return A key waiter. Can be used to wait for the lock to become
+	 * available.
+	 */
+	public KeyWaiter seal() {
+		KeyWaiter waiter = new KeyWaiter(this);
+		if (!this.isLocked()) {
+			Key key = new Key(this);
+			this._activeKey.set(key);
+			waiter._lock.set(null);
+			waiter.completed(key);
+		} else {
+			this._waiters.getAndUpdate(waiters -> {
+				waiters.add(waiter);
+				return waiters;
+			});
+		}
+		return waiter;
 	}
+
+	protected void release(Key key) {
+		if (key != this._activeKey.get()) {
+			throw new RuntimeException("Keys doesn't match!");
+		}
+
+		KeyWaiter waiter = null;
+
+		if (this._waiters.get().size() > 0) {
+			waiter = this._waiters.get().remove(0);
+		}
+
+		if (waiter != null) {
+			Key newKey = new Key(this);
+			this._activeKey.set(newKey);
+			waiter._lock.set(null);
+			waiter.completed(newKey);
+		} else {
+			this._activeKey.set(null);
+		}
+	}
+
 }
