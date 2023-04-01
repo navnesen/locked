@@ -6,8 +6,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class Locked {
-	private final AtomicReference<List<Task<Void>>> _queue = new AtomicReference<>(new ArrayList<>());
-	private final AtomicBoolean _isLocked = new AtomicBoolean(false);
+	protected final AtomicReference<List<Task<Void>>> _queue = new AtomicReference<>(new ArrayList<>());
+	protected final AtomicBoolean _isLocked = new AtomicBoolean(false);
 
 	public Task<Lock> lock() {
 		return new Task<>(() -> {
