@@ -20,6 +20,7 @@ class LockTest {
 		assert waiter._result.get() != null;
 		assert waiter._result.get().value != null;
 		assert lock._activeKey.get() == waiter._result.get().value;
+		assert lock.isLocked();
 	}
 
 	@Test
