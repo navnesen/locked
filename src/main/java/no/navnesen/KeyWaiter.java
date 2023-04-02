@@ -19,6 +19,5 @@ public class KeyWaiter extends Task<Key> {
 			this.failed(new CancelledException());
 			return waiters;
 		});
-
 	}
 }

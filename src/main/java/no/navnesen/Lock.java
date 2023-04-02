@@ -20,17 +20,20 @@ public class Lock {
 	 */
 	public KeyWaiter seal() {
 		KeyWaiter waiter = new KeyWaiter(this);
-		if (!this.isLocked()) {
-			Key key = new Key(this);
-			this._activeKey.set(key);
-			waiter._lock.set(null);
-			waiter.completed(key);
-		} else {
-			this._waiters.getAndUpdate(waiters -> {
-				waiters.add(waiter);
-				return waiters;
-			});
-		}
+		this._activeKey.updateAndGet(activeKey -> {
+			if (activeKey == null) {
+				Key key = new Key(this);
+				waiter._lock.set(null);
+				waiter.completed(key);
+				return key;
+			} else {
+				this._waiters.getAndUpdate(waiters -> {
+					waiters.add(waiter);
+					return waiters;
+				});
+				return activeKey;
+			}
+		});
 		return waiter;
 	}
 
