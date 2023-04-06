@@ -42,20 +42,18 @@ public class Lock {
 			throw new RuntimeException("Keys doesn't match!");
 		}
 
-		KeyWaiter waiter = null;
-
-		if (this._waiters.get().size() > 0) {
-			waiter = this._waiters.get().remove(0);
-		}
-
-		if (waiter != null) {
-			Key newKey = new Key(this);
-			this._activeKey.set(newKey);
-			waiter._lock.set(null);
-			waiter.completed(newKey);
-		} else {
-			this._activeKey.set(null);
-		}
+		this._waiters.updateAndGet(waiters -> {
+			if (waiters.size() > 0) {
+				KeyWaiter waiter = waiters.get(0);
+				waiter._lock.updateAndGet(__ -> {
+					waiter.completed(this._activeKey.updateAndGet(oldKey -> new Key(this)));
+					return null;
+				});
+			} else {
+				this._activeKey.set(null);
+			}
+			return waiters;
+		});
 	}
 
 }
