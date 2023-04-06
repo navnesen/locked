@@ -18,7 +18,7 @@ public class Mutex<T> {
 	}
 
 	public Contained<T> lock() {
-		return new Contained<>(this._lock.seal().await(), this._value);
+		return new Contained<>(this._lock.seal().await(), this);
 	}
 
 	public void set(T value) {
