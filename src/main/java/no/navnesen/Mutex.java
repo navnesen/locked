@@ -13,6 +13,10 @@ public class Mutex<T> {
 		return this._value;
 	}
 
+	public void unsafeSet(T value) {
+		this._value = value;
+	}
+
 	public Contained<T> lock() {
 		return new Contained<>(this._lock.seal().await(), this._value);
 	}
